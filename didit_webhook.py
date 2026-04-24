@@ -45,11 +45,13 @@ def notify_admin(message):
 @app.route("/didit-webhook", methods=["POST"])
 def didit_webhook():
     data = request.json
-
     print("Received webhook:", data)
 
-    user_id = data.get("reference_id")
-    status = data.get("status")
+    # Didit wraps data inside "data"
+    payload = data.get("data", {})
+
+    user_id = payload.get("reference_id")
+    status = payload.get("status")
 
     if not user_id or not status:
         return jsonify({"error": "Missing fields"}), 400
@@ -65,7 +67,7 @@ def didit_webhook():
 
     notify_admin(f"KYC update for user {user_id}: {status}")
 
-    return jsonify({"message": "Webhook received"}), 200
+    return jsonify({"message": "Webhook received"}), 20
 
     # Extract external_user_id (Telegram user ID)
     user_id = data.get("external_user_id")
