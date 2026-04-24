@@ -67,7 +67,7 @@ def didit_webhook():
 
     notify_admin(f"KYC update for user {user_id}: {status}")
 
-    return jsonify({"message": "Webhook received"}), 20
+    return jsonify({"message": "Webhook received"}), 200
 
     # Extract external_user_id (Telegram user ID)
     user_id = data.get("external_user_id")
