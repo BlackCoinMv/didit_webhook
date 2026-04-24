@@ -46,6 +46,27 @@ def notify_admin(message):
 def didit_webhook():
     data = request.json
 
+    print("Received webhook:", data)
+
+    user_id = data.get("reference_id")
+    status = data.get("status")
+
+    if not user_id or not status:
+        return jsonify({"error": "Missing fields"}), 400
+
+    update_kyc_status(user_id, status)
+
+    if status == "completed":
+        notify_user(user_id, "Your KYC verification is complete.")
+    elif status == "failed":
+        notify_user(user_id, "Your KYC verification failed. Please try again.")
+    elif status == "rejected":
+        notify_user(user_id, "Your KYC verification was rejected. Contact support.")
+
+    notify_admin(f"KYC update for user {user_id}: {status}")
+
+    return jsonify({"message": "Webhook received"}), 200
+
     # Extract external_user_id (Telegram user ID)
     user_id = data.get("external_user_id")
     status = data.get("status")  # approved / rejected / failed
