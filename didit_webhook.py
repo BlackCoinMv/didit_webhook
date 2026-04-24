@@ -47,14 +47,30 @@ def didit_webhook():
     data = request.json
     print("Received webhook:", data)
 
-    # Didit wraps data inside "data"
-    payload = data.get("data", {})
+    # Try all possible locations for Didit fields
+    user_id = (
+        data.get("reference_id")
+        or data.get("user_id")
+        or data.get("id")
+        or data.get("data", {}).get("reference_id")
+        or data.get("data", {}).get("user_id")
+        or data.get("data", {}).get("id")
+    )
 
-    user_id = payload.get("reference_id")
-    status = payload.get("status")
+    status = (
+        data.get("status")
+        or data.get("event")
+        or data.get("data", {}).get("status")
+        or data.get("data", {}).get("event")
+    )
 
     if not user_id or not status:
-        return jsonify({"error": "Missing fields"}), 400
+        # Return 200 so Didit stops retrying
+        return jsonify({"message": "Received but missing fields"}), 200
+
+    # Normalize status
+    if status.startswith("verification."):
+        status = status.replace("verification.", "")
 
     update_kyc_status(user_id, status)
 
@@ -67,7 +83,7 @@ def didit_webhook():
 
     notify_admin(f"KYC update for user {user_id}: {status}")
 
-    return jsonify({"message": "Webhook received"}), 200
+    return jsonify({"message": "Webhook processed"}), 200
 
     # Extract external_user_id (Telegram user ID)
     user_id = data.get("external_user_id")
